@@ -2,10 +2,6 @@ package middleware
 
 import "github.com/labstack/echo"
 
-const (
-	ACCESS_TOKEN_KEY = "Access-Token"
-)
-
 type goMiddleware struct {
 	// another stuff , may be needed by middleware
 }

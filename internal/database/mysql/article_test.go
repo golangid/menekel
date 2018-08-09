@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	models "github.com/golangid/menekel"
+	"github.com/golangid/menekel"
 	articleRepo "github.com/golangid/menekel/internal/database/mysql"
 	"github.com/stretchr/testify/assert"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
@@ -54,12 +54,12 @@ func TestGetArticleByID(t *testing.T) {
 
 func TestStoreArticle(t *testing.T) {
 	now := time.Now()
-	ar := &models.Article{
+	ar := &menekel.Article{
 		Title:     "Judul",
 		Content:   "Content",
 		CreatedAt: now,
 		UpdatedAt: now,
-		Author: models.Author{
+		Author: menekel.Author{
 			ID:   1,
 			Name: "Iman Tumorang",
 		},
@@ -123,13 +123,13 @@ func TestDeleteArticle(t *testing.T) {
 
 func TestUpdateArticle(t *testing.T) {
 	now := time.Now()
-	ar := &models.Article{
+	ar := &menekel.Article{
 		ID:        12,
 		Title:     "Judul",
 		Content:   "Content",
 		CreatedAt: now,
 		UpdatedAt: now,
-		Author: models.Author{
+		Author: menekel.Author{
 			ID:   1,
 			Name: "Iman Tumorang",
 		},

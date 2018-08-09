@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	models "github.com/golangid/menekel"
+	"github.com/golangid/menekel"
 	ucase "github.com/golangid/menekel/article"
 	"github.com/golangid/menekel/mocks"
 	_authorMock "github.com/golangid/menekel/mocks"
@@ -17,15 +17,15 @@ import (
 
 func TestFetch(t *testing.T) {
 	mockArticleRepo := new(mocks.ArticleRepository)
-	mockArticle := &models.Article{
+	mockArticle := &menekel.Article{
 		Title:   "Hello",
 		Content: "Content",
 	}
 
-	mockListArtilce := make([]*models.Article, 0)
+	mockListArtilce := make([]*menekel.Article, 0)
 	mockListArtilce = append(mockListArtilce, mockArticle)
 	mockArticleRepo.On("Fetch", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("int64")).Return(mockListArtilce, nil)
-	mockAuthor := &models.Author{
+	mockAuthor := &menekel.Author{
 		ID:   1,
 		Name: "Iman Tumorang",
 	}
@@ -65,14 +65,14 @@ func TestFetchError(t *testing.T) {
 
 func TestGetByID(t *testing.T) {
 	mockArticleRepo := new(mocks.ArticleRepository)
-	mockArticle := models.Article{
+	mockArticle := menekel.Article{
 		Title:   "Hello",
 		Content: "Content",
 	}
 
 	mockArticleRepo.On("GetByID", mock.Anything, mock.AnythingOfType("int64")).Return(&mockArticle, nil)
 
-	mockAuthor := &models.Author{
+	mockAuthor := &menekel.Author{
 		ID:   1,
 		Name: "Iman Tumorang",
 	}
@@ -91,7 +91,7 @@ func TestGetByID(t *testing.T) {
 
 func TestStore(t *testing.T) {
 	mockArticleRepo := new(mocks.ArticleRepository)
-	mockArticle := models.Article{
+	mockArticle := menekel.Article{
 		Title:   "Hello",
 		Content: "Content",
 	}
@@ -99,7 +99,7 @@ func TestStore(t *testing.T) {
 	tempMockArticle := mockArticle
 	tempMockArticle.ID = 0
 
-	mockArticleRepo.On("GetByTitle", mock.Anything, mock.AnythingOfType("string")).Return(nil, models.NOT_FOUND_ERROR)
+	mockArticleRepo.On("GetByTitle", mock.Anything, mock.AnythingOfType("string")).Return(nil, menekel.NOT_FOUND_ERROR)
 	mockArticleRepo.On("Store", mock.Anything, mock.AnythingOfType("*menekel.Article")).Return(mockArticle.ID, nil)
 
 	mockAuthorrepo := new(_authorMock.AuthorRepository)
@@ -115,12 +115,12 @@ func TestStore(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	mockArticleRepo := new(mocks.ArticleRepository)
-	mockArticle := models.Article{
+	mockArticle := menekel.Article{
 		Title:   "Hello",
 		Content: "Content",
 	}
 
-	mockArticleRepo.On("GetByID", mock.Anything, mock.AnythingOfType("int64")).Return(&mockArticle, models.NOT_FOUND_ERROR)
+	mockArticleRepo.On("GetByID", mock.Anything, mock.AnythingOfType("int64")).Return(&mockArticle, menekel.NOT_FOUND_ERROR)
 
 	mockArticleRepo.On("Delete", mock.Anything, mock.AnythingOfType("int64")).Return(true, nil)
 

@@ -7,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/golangid/menekel"
-	models "github.com/golangid/menekel"
 )
 
 type mysqlAuthorRepo struct {
@@ -21,7 +20,7 @@ func NewMysqlAuthorRepository(db *sql.DB) menekel.AuthorRepository {
 	}
 }
 
-func (m *mysqlAuthorRepo) getOne(ctx context.Context, query string, args ...interface{}) (*models.Author, error) {
+func (m *mysqlAuthorRepo) getOne(ctx context.Context, query string, args ...interface{}) (*menekel.Author, error) {
 
 	stmt, err := m.DB.PrepareContext(ctx, query)
 	if err != nil {
@@ -29,7 +28,7 @@ func (m *mysqlAuthorRepo) getOne(ctx context.Context, query string, args ...inte
 		return nil, err
 	}
 	row := stmt.QueryRowContext(ctx, args...)
-	a := &models.Author{}
+	a := &menekel.Author{}
 
 	err = row.Scan(
 		&a.ID,
@@ -45,7 +44,7 @@ func (m *mysqlAuthorRepo) getOne(ctx context.Context, query string, args ...inte
 	return a, nil
 }
 
-func (m *mysqlAuthorRepo) GetByID(ctx context.Context, id int64) (*models.Author, error) {
+func (m *mysqlAuthorRepo) GetByID(ctx context.Context, id int64) (*menekel.Author, error) {
 	query := `SELECT id, name, created_at, updated_at FROM author WHERE id=?`
 	return m.getOne(ctx, query, id)
 }
