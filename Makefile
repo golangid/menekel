@@ -5,7 +5,7 @@ build: test
 
 test:
 	./test_cover.sh
-
+	
 clean:
 	if [ -f ${BINARY} ] ; then rm ${BINARY} ; fi
 
