@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	models "github.com/golangid/menekel"
-	articleHttp "github.com/golangid/menekel/article/delivery/http"
-	"github.com/golangid/menekel/article/mocks"
+	"github.com/golangid/menekel"
+	articleHttp "github.com/golangid/menekel/internal/http"
+	"github.com/golangid/menekel/mocks"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,11 +20,11 @@ import (
 )
 
 func TestFetch(t *testing.T) {
-	var mockArticle models.Article
+	var mockArticle menekel.Article
 	err := faker.FakeData(&mockArticle)
 	assert.NoError(t, err)
 	mockUCase := new(mocks.ArticleUsecase)
-	mockListArticle := make([]*models.Article, 0)
+	mockListArticle := make([]*menekel.Article, 0)
 	mockListArticle = append(mockListArticle, &mockArticle)
 	num := 1
 	cursor := "2"
@@ -52,7 +52,7 @@ func TestFetchError(t *testing.T) {
 	mockUCase := new(mocks.ArticleUsecase)
 	num := 1
 	cursor := "2"
-	mockUCase.On("Fetch", mock.Anything, cursor, int64(num)).Return(nil, "", models.INTERNAL_SERVER_ERROR)
+	mockUCase.On("Fetch", mock.Anything, cursor, int64(num)).Return(nil, "", menekel.INTERNAL_SERVER_ERROR)
 
 	e := echo.New()
 	req, err := http.NewRequest(echo.GET, "/article?num=1&cursor="+cursor, strings.NewReader(""))
@@ -73,7 +73,7 @@ func TestFetchError(t *testing.T) {
 }
 
 func TestGetByID(t *testing.T) {
-	var mockArticle models.Article
+	var mockArticle menekel.Article
 	err := faker.FakeData(&mockArticle)
 	assert.NoError(t, err)
 
@@ -102,7 +102,7 @@ func TestGetByID(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	mockArticle := models.Article{
+	mockArticle := menekel.Article{
 		Title:     "Title",
 		Content:   "Content",
 		CreatedAt: time.Now(),
@@ -137,7 +137,7 @@ func TestStore(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	var mockArticle models.Article
+	var mockArticle menekel.Article
 	err := faker.FakeData(&mockArticle)
 	assert.NoError(t, err)
 

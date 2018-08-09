@@ -1,4 +1,4 @@
-package repository_test
+package mysql_test
 
 import (
 	"context"
@@ -6,12 +6,12 @@ import (
 	"time"
 
 	models "github.com/golangid/menekel"
-	articleRepo "github.com/golangid/menekel/article/repository"
+	articleRepo "github.com/golangid/menekel/internal/database/mysql"
 	"github.com/stretchr/testify/assert"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
-func TestFetch(t *testing.T) {
+func TestFetchArticle(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -32,7 +32,7 @@ func TestFetch(t *testing.T) {
 	assert.Len(t, list, 2)
 }
 
-func TestGetByID(t *testing.T) {
+func TestGetArticleByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -52,7 +52,7 @@ func TestGetByID(t *testing.T) {
 	assert.NotNil(t, anArticle)
 }
 
-func TestStore(t *testing.T) {
+func TestStoreArticle(t *testing.T) {
 	now := time.Now()
 	ar := &models.Article{
 		Title:     "Judul",
@@ -81,7 +81,7 @@ func TestStore(t *testing.T) {
 	assert.Equal(t, int64(12), lastId)
 }
 
-func TestGetByTitle(t *testing.T) {
+func TestGetArticleByTitle(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -101,7 +101,7 @@ func TestGetByTitle(t *testing.T) {
 	assert.NotNil(t, anArticle)
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteArticle(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -121,7 +121,7 @@ func TestDelete(t *testing.T) {
 	assert.True(t, anArticleStatus)
 }
 
-func TestUpdate(t *testing.T) {
+func TestUpdateArticle(t *testing.T) {
 	now := time.Now()
 	ar := &models.Article{
 		ID:        12,

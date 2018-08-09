@@ -1,28 +1,25 @@
-package repository
+package mysql
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 
-	author "github.com/golangid/menekel"
+	"github.com/golangid/menekel"
 
 	"github.com/sirupsen/logrus"
-
-	models "github.com/golangid/menekel"
-	article "github.com/golangid/menekel/article"
 )
 
 type mysqlArticleRepository struct {
 	Conn *sql.DB
 }
 
-func NewMysqlArticleRepository(Conn *sql.DB) article.ArticleRepository {
+func NewMysqlArticleRepository(Conn *sql.DB) menekel.ArticleRepository {
 
 	return &mysqlArticleRepository{Conn}
 }
 
-func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args ...interface{}) ([]*models.Article, error) {
+func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args ...interface{}) ([]*menekel.Article, error) {
 
 	rows, err := m.Conn.QueryContext(ctx, query, args...)
 
@@ -31,9 +28,9 @@ func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args .
 		return nil, err
 	}
 	defer rows.Close()
-	result := make([]*models.Article, 0)
+	result := make([]*menekel.Article, 0)
 	for rows.Next() {
-		t := new(models.Article)
+		t := new(menekel.Article)
 		authorID := int64(0)
 		err = rows.Scan(
 			&t.ID,
@@ -48,7 +45,7 @@ func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args .
 			logrus.Error(err)
 			return nil, err
 		}
-		t.Author = author.Author{
+		t.Author = menekel.Author{
 			ID: authorID,
 		}
 		result = append(result, t)
@@ -57,7 +54,7 @@ func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args .
 	return result, nil
 }
 
-func (m *mysqlArticleRepository) Fetch(ctx context.Context, cursor string, num int64) ([]*models.Article, error) {
+func (m *mysqlArticleRepository) Fetch(ctx context.Context, cursor string, num int64) ([]*menekel.Article, error) {
 
 	query := `SELECT id,title,content, author_id, updated_at, created_at
   						FROM article WHERE ID > ? LIMIT ?`
@@ -65,7 +62,7 @@ func (m *mysqlArticleRepository) Fetch(ctx context.Context, cursor string, num i
 	return m.fetch(ctx, query, cursor, num)
 
 }
-func (m *mysqlArticleRepository) GetByID(ctx context.Context, id int64) (*models.Article, error) {
+func (m *mysqlArticleRepository) GetByID(ctx context.Context, id int64) (*menekel.Article, error) {
 	query := `SELECT id,title,content, author_id, updated_at, created_at
   						FROM article WHERE ID = ?`
 
@@ -74,17 +71,17 @@ func (m *mysqlArticleRepository) GetByID(ctx context.Context, id int64) (*models
 		return nil, err
 	}
 
-	a := &models.Article{}
+	a := &menekel.Article{}
 	if len(list) > 0 {
 		a = list[0]
 	} else {
-		return nil, models.NOT_FOUND_ERROR
+		return nil, menekel.NOT_FOUND_ERROR
 	}
 
 	return a, nil
 }
 
-func (m *mysqlArticleRepository) GetByTitle(ctx context.Context, title string) (*models.Article, error) {
+func (m *mysqlArticleRepository) GetByTitle(ctx context.Context, title string) (*menekel.Article, error) {
 	query := `SELECT id,title,content, author_id, updated_at, created_at
   						FROM article WHERE title = ?`
 
@@ -93,16 +90,16 @@ func (m *mysqlArticleRepository) GetByTitle(ctx context.Context, title string) (
 		return nil, err
 	}
 
-	a := &models.Article{}
+	a := &menekel.Article{}
 	if len(list) > 0 {
 		a = list[0]
 	} else {
-		return nil, models.NOT_FOUND_ERROR
+		return nil, menekel.NOT_FOUND_ERROR
 	}
 	return a, nil
 }
 
-func (m *mysqlArticleRepository) Store(ctx context.Context, a *models.Article) (int64, error) {
+func (m *mysqlArticleRepository) Store(ctx context.Context, a *menekel.Article) (int64, error) {
 
 	query := `INSERT  article SET title=? , content=? , author_id=?, updated_at=? , created_at=?`
 	stmt, err := m.Conn.PrepareContext(ctx, query)
@@ -144,7 +141,7 @@ func (m *mysqlArticleRepository) Delete(ctx context.Context, id int64) (bool, er
 
 	return true, nil
 }
-func (m *mysqlArticleRepository) Update(ctx context.Context, ar *models.Article) (*models.Article, error) {
+func (m *mysqlArticleRepository) Update(ctx context.Context, ar *menekel.Article) (*menekel.Article, error) {
 	query := `UPDATE article set title=?, content=?, author_id=?, updated_at=? WHERE ID = ?`
 
 	stmt, err := m.Conn.PrepareContext(ctx, query)

@@ -1,4 +1,4 @@
-package repository
+package mysql
 
 import (
 	"context"
@@ -6,15 +6,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/golangid/menekel"
 	models "github.com/golangid/menekel"
-	"github.com/golangid/menekel/author"
 )
 
 type mysqlAuthorRepo struct {
 	DB *sql.DB
 }
 
-func NewMysqlAuthorRepository(db *sql.DB) author.AuthorRepository {
+func NewMysqlAuthorRepository(db *sql.DB) menekel.AuthorRepository {
 
 	return &mysqlAuthorRepo{
 		DB: db,

@@ -121,13 +121,13 @@ func (_m *ArticleRepository) Store(ctx context.Context, a *menekel.Article) (int
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: ctx, _a1
-func (_m *ArticleRepository) Update(ctx context.Context, _a1 *menekel.Article) (*menekel.Article, error) {
-	ret := _m.Called(ctx, _a1)
+// Update provides a mock function with given fields: ctx, article
+func (_m *ArticleRepository) Update(ctx context.Context, article *menekel.Article) (*menekel.Article, error) {
+	ret := _m.Called(ctx, article)
 
 	var r0 *menekel.Article
 	if rf, ok := ret.Get(0).(func(context.Context, *menekel.Article) *menekel.Article); ok {
-		r0 = rf(ctx, _a1)
+		r0 = rf(ctx, article)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*menekel.Article)
@@ -136,7 +136,7 @@ func (_m *ArticleRepository) Update(ctx context.Context, _a1 *menekel.Article) (
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *menekel.Article) error); ok {
-		r1 = rf(ctx, _a1)
+		r1 = rf(ctx, article)
 	} else {
 		r1 = ret.Error(1)
 	}

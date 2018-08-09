@@ -5,25 +5,23 @@ import (
 	"strconv"
 	"time"
 
-	models "github.com/golangid/menekel"
 	"github.com/sirupsen/logrus"
 
-	"github.com/golangid/menekel/article"
-	_authorRepo "github.com/golangid/menekel/author"
+	"github.com/golangid/menekel"
 )
 
 type articleUsecase struct {
-	articleRepos   article.ArticleRepository
-	authorRepo     _authorRepo.AuthorRepository
+	articleRepos   menekel.ArticleRepository
+	authorRepo     menekel.AuthorRepository
 	contextTimeout time.Duration
 }
 
 type authorChanel struct {
-	Author *models.Author
+	Author *menekel.Author
 	Error  error
 }
 
-func NewArticleUsecase(a article.ArticleRepository, ar _authorRepo.AuthorRepository, timeout time.Duration) article.ArticleUsecase {
+func NewArticleUsecase(a menekel.ArticleRepository, ar menekel.AuthorRepository, timeout time.Duration) menekel.ArticleUsecase {
 	return &articleUsecase{
 		articleRepos:   a,
 		authorRepo:     ar,
@@ -31,7 +29,7 @@ func NewArticleUsecase(a article.ArticleRepository, ar _authorRepo.AuthorReposit
 	}
 }
 
-func (a *articleUsecase) getAuthorDetail(ctx context.Context, item *models.Article, authorChan chan authorChanel) {
+func (a *articleUsecase) getAuthorDetail(ctx context.Context, item *menekel.Article, authorChan chan authorChanel) {
 
 	res, err := a.authorRepo.GetByID(ctx, item.Author.ID)
 	holder := authorChanel{
@@ -43,7 +41,7 @@ func (a *articleUsecase) getAuthorDetail(ctx context.Context, item *models.Artic
 	}
 	authorChan <- holder
 }
-func (a *articleUsecase) getAuthorDetails(ctx context.Context, data []*models.Article) ([]*models.Article, error) {
+func (a *articleUsecase) getAuthorDetails(ctx context.Context, data []*menekel.Article) ([]*menekel.Article, error) {
 	chAuthor := make(chan authorChanel)
 	defer close(chAuthor)
 	existingAuthorMap := make(map[int64]bool)
@@ -55,7 +53,7 @@ func (a *articleUsecase) getAuthorDetails(ctx context.Context, data []*models.Ar
 
 	}
 
-	mapAuthor := make(map[int64]*models.Author)
+	mapAuthor := make(map[int64]*menekel.Author)
 	totalGorutineCalled := len(existingAuthorMap)
 	for i := 0; i < totalGorutineCalled; i++ {
 		select {
@@ -83,7 +81,7 @@ func (a *articleUsecase) getAuthorDetails(ctx context.Context, data []*models.Ar
 	return data, nil
 }
 
-func (a *articleUsecase) Fetch(c context.Context, cursor string, num int64) ([]*models.Article, string, error) {
+func (a *articleUsecase) Fetch(c context.Context, cursor string, num int64) ([]*menekel.Article, string, error) {
 	if num == 0 {
 		num = 10
 	}
@@ -111,7 +109,7 @@ func (a *articleUsecase) Fetch(c context.Context, cursor string, num int64) ([]*
 	return listArticle, nextCursor, nil
 }
 
-func (a *articleUsecase) GetByID(c context.Context, id int64) (*models.Article, error) {
+func (a *articleUsecase) GetByID(c context.Context, id int64) (*menekel.Article, error) {
 
 	ctx, cancel := context.WithTimeout(c, a.contextTimeout)
 	defer cancel()
@@ -129,7 +127,7 @@ func (a *articleUsecase) GetByID(c context.Context, id int64) (*models.Article, 
 	return res, nil
 }
 
-func (a *articleUsecase) Update(c context.Context, ar *models.Article) (*models.Article, error) {
+func (a *articleUsecase) Update(c context.Context, ar *menekel.Article) (*menekel.Article, error) {
 
 	ctx, cancel := context.WithTimeout(c, a.contextTimeout)
 	defer cancel()
@@ -138,7 +136,7 @@ func (a *articleUsecase) Update(c context.Context, ar *models.Article) (*models.
 	return a.articleRepos.Update(ctx, ar)
 }
 
-func (a *articleUsecase) GetByTitle(c context.Context, title string) (*models.Article, error) {
+func (a *articleUsecase) GetByTitle(c context.Context, title string) (*menekel.Article, error) {
 
 	ctx, cancel := context.WithTimeout(c, a.contextTimeout)
 	defer cancel()
@@ -156,13 +154,13 @@ func (a *articleUsecase) GetByTitle(c context.Context, title string) (*models.Ar
 	return res, nil
 }
 
-func (a *articleUsecase) Store(c context.Context, m *models.Article) (*models.Article, error) {
+func (a *articleUsecase) Store(c context.Context, m *menekel.Article) (*menekel.Article, error) {
 
 	ctx, cancel := context.WithTimeout(c, a.contextTimeout)
 	defer cancel()
 	existedArticle, _ := a.GetByTitle(ctx, m.Title)
 	if existedArticle != nil {
-		return nil, models.CONFLIT_ERROR
+		return nil, menekel.CONFLIT_ERROR
 	}
 
 	id, err := a.articleRepos.Store(ctx, m)
@@ -179,7 +177,7 @@ func (a *articleUsecase) Delete(c context.Context, id int64) (bool, error) {
 	defer cancel()
 	existedArticle, _ := a.articleRepos.GetByID(ctx, id)
 	if existedArticle == nil {
-		return false, models.NOT_FOUND_ERROR
+		return false, menekel.NOT_FOUND_ERROR
 	}
 	return a.articleRepos.Delete(ctx, id)
 }

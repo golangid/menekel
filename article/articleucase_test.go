@@ -8,9 +8,9 @@ import (
 	"time"
 
 	models "github.com/golangid/menekel"
-	"github.com/golangid/menekel/article/mocks"
-	ucase "github.com/golangid/menekel/article/usecase"
-	_authorMock "github.com/golangid/menekel/author/mocks"
+	ucase "github.com/golangid/menekel/article"
+	"github.com/golangid/menekel/mocks"
+	_authorMock "github.com/golangid/menekel/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

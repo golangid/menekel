@@ -7,9 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	models "github.com/golangid/menekel"
-
-	articleUcase "github.com/golangid/menekel/article"
+	"github.com/golangid/menekel"
+	articleUcase "github.com/golangid/menekel"
 	"github.com/labstack/echo"
 
 	validator "gopkg.in/go-playground/validator.v9"
@@ -58,7 +57,7 @@ func (a *HttpArticleHandler) GetByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, art)
 }
 
-func isRequestValid(m *models.Article) (bool, error) {
+func isRequestValid(m *menekel.Article) (bool, error) {
 
 	validate := validator.New()
 
@@ -70,7 +69,7 @@ func isRequestValid(m *models.Article) (bool, error) {
 }
 
 func (a *HttpArticleHandler) Store(c echo.Context) error {
-	var article models.Article
+	var article menekel.Article
 	err := c.Bind(&article)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
@@ -116,12 +115,12 @@ func getStatusCode(err error) int {
 
 	logrus.Error(err)
 	switch err {
-	case models.INTERNAL_SERVER_ERROR:
+	case menekel.INTERNAL_SERVER_ERROR:
 
 		return http.StatusInternalServerError
-	case models.NOT_FOUND_ERROR:
+	case menekel.NOT_FOUND_ERROR:
 		return http.StatusNotFound
-	case models.CONFLIT_ERROR:
+	case menekel.CONFLIT_ERROR:
 		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
