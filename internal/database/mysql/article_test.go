@@ -224,7 +224,6 @@ func (m *mysqlArticleSuiteTest) TestFetch() {
 	}
 }
 
-/*
 func (m *mysqlArticleSuiteTest) TestGetByID() {
 	// Prepare
 	mockArticle := getMockArrArticle()[0]
@@ -246,7 +245,7 @@ func (m *mysqlArticleSuiteTest) TestUpdate() {
 	mockArticle := getMockArrArticle()[0]
 	seedArticleData(m.T(), m.DBConn)
 	repo := repoHandler.NewArticleRepository(m.DBConn)
-
+	mockArticle.UpdatedAt = time.Now()
 	mockArticle.Title = "Teknologi" // previously only "tekno"
 
 	// Test the function
@@ -273,6 +272,6 @@ func (m *mysqlArticleSuiteTest) TestDelete() {
 	// Evaluate the results
 	require.NoError(m.T(), err)
 	res := getArticleByID(m.T(), m.DBConn, mockArticle.ID)
-	assert.Nil(m.T(), res) // because already deleted the article should be nil
+	assert.Empty(m.T(), res.ID)    // because already deleted the article should be empty
+	assert.Empty(m.T(), res.Title) // because already deleted the article should be empty
 }
-*/
