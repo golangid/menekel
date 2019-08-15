@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/golangid/menekel"
@@ -131,7 +132,10 @@ func (m *mysqlArticleRepository) Store(ctx context.Context, a *menekel.Article) 
 		return
 	}
 
-	res, err := stmt.ExecContext(ctx, a.Title, a.Content, a.UpdatedAt, a.CreatedAt)
+	now := time.Now()
+	a.CreatedAt = now
+	a.UpdatedAt = now
+	res, err := stmt.ExecContext(ctx, a.Title, a.Content, now, now)
 	if err != nil {
 		return
 	}
@@ -176,7 +180,9 @@ func (m *mysqlArticleRepository) Update(ctx context.Context, ar *menekel.Article
 		return
 	}
 
-	res, err := stmt.ExecContext(ctx, ar.Title, ar.Content, ar.UpdatedAt, ar.ID)
+	now := time.Now()
+	ar.UpdatedAt = now
+	res, err := stmt.ExecContext(ctx, ar.Title, ar.Content, now, ar.ID)
 	if err != nil {
 		return
 	}

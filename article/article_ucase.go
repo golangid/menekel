@@ -17,6 +17,9 @@ func NewArticleUsecase(a menekel.ArticleRepository, timeout time.Duration) menek
 	if a == nil {
 		panic("Article repository is nil")
 	}
+	if timeout == 0 {
+		panic("Timeout is empty")
+	}
 	return &articleUsecase{
 		articleRepo:    a,
 		contextTimeout: timeout,

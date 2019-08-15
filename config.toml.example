@@ -1,0 +1,11 @@
+title="Configuration File for Menekel"
+debug=true
+contextTimeout="2"
+[server]
+  address= ":9090"
+[database]
+  host="mysql"
+  port="3306"
+  user="root"
+  pass="root"
+  name="article"

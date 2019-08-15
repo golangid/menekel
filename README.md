@@ -8,47 +8,35 @@ menekel `/'m(ə)n(ə)k(ə)l/` stands for : `menej artikel` is a sample of articl
 ### Contribution 
 You can file an [issue](https://github.com/golangid/menekel/issues/new) or submit a Pull Request
 
-### Run The Project
-
-Before run the aplication, make sure you already migrate the `article.sql` to your database. And edit the `config.json` based on your needs.
-
+### Testing
+**Integration Test**
 ```bash
-#move to directory
-cd $GOPATH/src/github.com/golangid
-
-# Clone into YOUR $GOPATH/src
-git clone https://github.com/golangid/menekel.git
-
-#move to project
-cd menekel
-
-# Install Dependencies
-dep ensure
-
-# Make File
-make
-
-# Run Project
-./menekel http
-
+$ make test
+```
+**Unit Test**
+```bash
+$ make unittest
 ```
 
-Or
+### Run The Project
 
 ```bash
-# GET WITH GO GET
-go get github.com/golangid/menekel
+# Dockerize the app
+$ make docker
 
-# Go to directory
+# Create the config file
+$ cp config.toml.example config.toml
 
-cd $GOPATH/src/github.com/golangid/menekel
+# run the project
+$ make run
 
-# Install Dependencies
-dep ensure
+# Migrate the schema
+$ make migrate-prepare
+$ make migrate-up
+```
 
-# Make File
-make
+Now the application should be active. Try to access it.
 
-# Run Project
-./menekel http
+```bash
+$ curl http://localhost:9090/articles
 ```
