@@ -24,22 +24,20 @@ func TestFetch(t *testing.T) {
 	err := faker.FakeData(&mockArticle)
 	assert.NoError(t, err)
 	mockUCase := new(mocks.ArticleUsecase)
-	mockListArticle := make([]*menekel.Article, 0)
-	mockListArticle = append(mockListArticle, &mockArticle)
+	mockListArticle := make([]menekel.Article, 0)
+	mockListArticle = append(mockListArticle, mockArticle)
 	num := 1
 	cursor := "2"
 	mockUCase.On("Fetch", mock.Anything, cursor, int64(num)).Return(mockListArticle, "10", nil)
 
 	e := echo.New()
-	req, err := http.NewRequest(echo.GET, "/article?num=1&cursor="+cursor, strings.NewReader(""))
+	req, err := http.NewRequest(echo.GET, "/articles?num=1&cursor="+cursor, strings.NewReader(""))
 	assert.NoError(t, err)
 
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	handler := articleHttp.HttpArticleHandler{
-		AUsecase: mockUCase,
-	}
-	handler.FetchArticle(c)
+
+	articleHttp.InitArticleHandler(e, mockUCase)
+	e.ServeHTTP(rec, req)
 
 	responseCursor := rec.Header().Get("X-Cursor")
 	assert.Equal(t, "10", responseCursor)
@@ -52,18 +50,16 @@ func TestFetchError(t *testing.T) {
 	mockUCase := new(mocks.ArticleUsecase)
 	num := 1
 	cursor := "2"
-	mockUCase.On("Fetch", mock.Anything, cursor, int64(num)).Return(nil, "", menekel.INTERNAL_SERVER_ERROR)
+	mockUCase.On("Fetch", mock.Anything, cursor, int64(num)).Return(nil, "", menekel.ErrInternalServerError)
 
 	e := echo.New()
-	req, err := http.NewRequest(echo.GET, "/article?num=1&cursor="+cursor, strings.NewReader(""))
+	req, err := http.NewRequest(echo.GET, "/articles?num=1&cursor="+cursor, strings.NewReader(""))
 	assert.NoError(t, err)
 
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	handler := articleHttp.HttpArticleHandler{
-		AUsecase: mockUCase,
-	}
-	handler.FetchArticle(c)
+
+	articleHttp.InitArticleHandler(e, mockUCase)
+	e.ServeHTTP(rec, req)
 
 	responseCursor := rec.Header().Get("X-Cursor")
 	assert.Equal(t, "", responseCursor)
@@ -78,24 +74,17 @@ func TestGetByID(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockUCase := new(mocks.ArticleUsecase)
-
 	num := int(mockArticle.ID)
-
-	mockUCase.On("GetByID", mock.Anything, int64(num)).Return(&mockArticle, nil)
+	mockUCase.On("GetByID", mock.Anything, int64(num)).Return(mockArticle, nil)
 
 	e := echo.New()
-	req, err := http.NewRequest(echo.GET, "/article/"+strconv.Itoa(int(num)), strings.NewReader(""))
+	req, err := http.NewRequest(echo.GET, "/articles/"+strconv.Itoa(int(num)), strings.NewReader(""))
 	assert.NoError(t, err)
 
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath("article/:id")
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(num))
-	handler := articleHttp.HttpArticleHandler{
-		AUsecase: mockUCase,
-	}
-	handler.GetByID(c)
+
+	articleHttp.InitArticleHandler(e, mockUCase)
+	e.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	mockUCase.AssertExpectations(t)
@@ -115,22 +104,16 @@ func TestStore(t *testing.T) {
 
 	j, err := json.Marshal(tempMockArticle)
 	assert.NoError(t, err)
-
-	mockUCase.On("Store", mock.Anything, mock.AnythingOfType("*menekel.Article")).Return(&mockArticle, nil)
+	mockUCase.On("Store", mock.Anything, mock.AnythingOfType("*menekel.Article")).Return(nil)
 
 	e := echo.New()
-	req, err := http.NewRequest(echo.POST, "/article", strings.NewReader(string(j)))
+	req, err := http.NewRequest(echo.POST, "/articles", strings.NewReader(string(j)))
 	assert.NoError(t, err)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath("/article")
-
-	handler := articleHttp.HttpArticleHandler{
-		AUsecase: mockUCase,
-	}
-	handler.Store(c)
+	articleHttp.InitArticleHandler(e, mockUCase)
+	e.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 	mockUCase.AssertExpectations(t)
@@ -142,26 +125,17 @@ func TestDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockUCase := new(mocks.ArticleUsecase)
-
 	num := int(mockArticle.ID)
-
-	mockUCase.On("Delete", mock.Anything, int64(num)).Return(true, nil)
+	mockUCase.On("Delete", mock.Anything, int64(num)).Return(nil)
 
 	e := echo.New()
-	req, err := http.NewRequest(echo.DELETE, "/article/"+strconv.Itoa(int(num)), strings.NewReader(""))
+	req, err := http.NewRequest(echo.DELETE, "/articles/"+strconv.Itoa(int(num)), strings.NewReader(""))
 	assert.NoError(t, err)
 
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetPath("article/:id")
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(num))
-	handler := articleHttp.HttpArticleHandler{
-		AUsecase: mockUCase,
-	}
-	handler.Delete(c)
+	articleHttp.InitArticleHandler(e, mockUCase)
+	e.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 	mockUCase.AssertExpectations(t)
-
 }
