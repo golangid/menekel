@@ -6,8 +6,8 @@ endif
 # Database
 MYSQL_USER ?= user
 MYSQL_PASSWORD ?= password
-MYSQL_ADDRESS ?= 127.0.0.1:33060
-MYSQL_DATABASE ?= testing
+MYSQL_ADDRESS ?= 127.0.0.1:3306
+MYSQL_DATABASE ?= article
 
 .PHONY: lint-prepare
 lint-prepare:
