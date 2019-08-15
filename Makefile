@@ -52,7 +52,6 @@ test: mysql-test-up
 unittest:
 	@go test -v -short -race ./...
 
-.PHONY: menekel
 menekel:
 	@go build -o menekel app/main.go
 

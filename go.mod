@@ -20,9 +20,11 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.0.0-20180426014445-588f4e8bddc6 // indirect
+	github.com/lib/pq v1.2.0 // indirect
 	github.com/magiconair/properties v1.7.6 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
+	github.com/mattn/go-sqlite3 v1.11.0 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180220230111-00c29f56e238 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pelletier/go-toml v1.1.0 // indirect

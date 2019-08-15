@@ -1,9 +1,8 @@
 title="Configuration File for Menekel"
 debug=true
+contextTimeout="2"
 [server]
   address= ":9090"
-
-contextTimeout=2 #in seconds
 [database]
   host="mysql"
   port="3306"

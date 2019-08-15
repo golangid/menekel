@@ -27,7 +27,7 @@ func initHTTP(cmd *cobra.Command, args []string) {
 	e.Use(middL.CORS)
 	articleRepository = mysql.NewArticleRepository(dbConn)
 
-	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
+	timeoutContext := time.Duration(viper.GetInt("contextTimeout")) * time.Second
 	au := article.NewArticleUsecase(articleRepository, timeoutContext)
 	delivery.InitArticleHandler(e, au)
 
