@@ -2,153 +2,276 @@ package mysql_test
 
 import (
 	"context"
+	"database/sql"
+	"io"
+	"log"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/golangid/menekel"
-	articleRepo "github.com/golangid/menekel/internal/database/mysql"
+	repoHandler "github.com/golangid/menekel/internal/database/mysql"
 	"github.com/stretchr/testify/assert"
-	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestFetchArticle(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-	rows := sqlmock.NewRows([]string{"id", "title", "content", "author_id", "updated_at", "created_at"}).
-		AddRow(1, "title 1", "Content 1", 1, time.Now(), time.Now()).
-		AddRow(2, "title 2", "Content 2", 1, time.Now(), time.Now())
-
-	query := "SELECT id,title,content, author_id, updated_at, created_at FROM article WHERE ID > \\? LIMIT \\?"
-
-	mock.ExpectQuery(query).WillReturnRows(rows)
-	a := articleRepo.NewMysqlArticleRepository(db)
-	cursor := "sampleCursor"
-	num := int64(5)
-	list, err := a.Fetch(context.TODO(), cursor, num)
-	assert.NoError(t, err)
-	assert.Len(t, list, 2)
+type mysqlArticleSuiteTest struct {
+	MysqlSuite
 }
 
-func TestGetArticleByID(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+func TestArticleSuite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skip article mysql repository test")
 	}
-	defer db.Close()
-	rows := sqlmock.NewRows([]string{"id", "title", "content", "author_id", "updated_at", "created_at"}).
-		AddRow(1, "title 1", "Content 1", 1, time.Now(), time.Now())
-
-	query := "SELECT id,title,content, author_id, updated_at, created_at FROM article WHERE ID = \\?"
-
-	mock.ExpectQuery(query).WillReturnRows(rows)
-	a := articleRepo.NewMysqlArticleRepository(db)
-
-	num := int64(5)
-	anArticle, err := a.GetByID(context.TODO(), num)
-	assert.NoError(t, err)
-	assert.NotNil(t, anArticle)
-}
-
-func TestStoreArticle(t *testing.T) {
-	now := time.Now()
-	ar := &menekel.Article{
-		Title:     "Judul",
-		Content:   "Content",
-		CreatedAt: now,
-		UpdatedAt: now,
-		Author: menekel.Author{
-			ID:   1,
-			Name: "Iman Tumorang",
-		},
+	dsn := os.Getenv("MYSQL_TEST_URL")
+	if dsn == "" {
+		dsn = "root:root@tcp(127.0.0.1:33060)/testing?parseTime=1&loc=Asia%2FJakarta&charset=utf8mb4&collation=utf8mb4_unicode_ci"
 	}
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	query := "INSERT  article SET title=\\? , content=\\? , author_id=\\?, updated_at=\\? , created_at=\\?"
-	prep := mock.ExpectPrepare(query)
-	prep.ExpectExec().WithArgs(ar.Title, ar.Content, ar.Author.ID, ar.CreatedAt, ar.UpdatedAt).WillReturnResult(sqlmock.NewResult(12, 1))
-
-	a := articleRepo.NewMysqlArticleRepository(db)
-
-	lastId, err := a.Store(context.TODO(), ar)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(12), lastId)
-}
-
-func TestGetArticleByTitle(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-	rows := sqlmock.NewRows([]string{"id", "title", "content", "author_id", "updated_at", "created_at"}).
-		AddRow(1, "title 1", "Content 1", 1, time.Now(), time.Now())
-
-	query := "SELECT id,title,content, author_id, updated_at, created_at FROM article WHERE title = \\?"
-
-	mock.ExpectQuery(query).WillReturnRows(rows)
-	a := articleRepo.NewMysqlArticleRepository(db)
-
-	title := "title 1"
-	anArticle, err := a.GetByTitle(context.TODO(), title)
-	assert.NoError(t, err)
-	assert.NotNil(t, anArticle)
-}
-
-func TestDeleteArticle(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	query := "DELETE FROM article WHERE id = \\?"
-
-	prep := mock.ExpectPrepare(query)
-	prep.ExpectExec().WithArgs(12).WillReturnResult(sqlmock.NewResult(12, 1))
-
-	a := articleRepo.NewMysqlArticleRepository(db)
-
-	num := int64(12)
-	anArticleStatus, err := a.Delete(context.TODO(), num)
-	assert.NoError(t, err)
-	assert.True(t, anArticleStatus)
-}
-
-func TestUpdateArticle(t *testing.T) {
-	now := time.Now()
-	ar := &menekel.Article{
-		ID:        12,
-		Title:     "Judul",
-		Content:   "Content",
-		CreatedAt: now,
-		UpdatedAt: now,
-		Author: menekel.Author{
-			ID:   1,
-			Name: "Iman Tumorang",
+	articleSuite := &mysqlArticleSuiteTest{
+		MysqlSuite{
+			DSN:                     dsn,
+			MigrationLocationFolder: "migrations",
 		},
 	}
 
-	db, mock, err := sqlmock.New()
+	suite.Run(t, articleSuite)
+}
+
+func (s *mysqlArticleSuiteTest) SetupTest() {
+	log.Println("Starting a Test. Migrating the Database")
+	err, _ := s.Migration.Up()
+	require.NoError(s.T(), err)
+	log.Println("Database Migrated Successfully")
+}
+
+func (s *mysqlArticleSuiteTest) TearDownTest() {
+	log.Println("Finishing Test. Dropping The Database")
+	err, _ := s.Migration.Down()
+	require.NoError(s.T(), err)
+	log.Println("Database Dropped Successfully")
+}
+
+// https://blevesearch.com/news/Deferred-Cleanup,-Checking-Errors,-and-Potential-Problems/
+func Close(c io.Closer) {
+	err := c.Close()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		log.Fatal(err)
 	}
-	defer db.Close()
+}
+func getArticleByID(t *testing.T, DBconn *sql.DB, id int64) menekel.Article {
+	var res menekel.Article
 
-	query := "UPDATE article set title=\\?, content=\\?, author_id=\\?, updated_at=\\? WHERE ID = \\?"
+	query := `SELECT id, title, content, created_at, updated_at FROM article WHERE id=?`
 
-	prep := mock.ExpectPrepare(query)
-	prep.ExpectExec().WithArgs(ar.Title, ar.Content, ar.Author.ID, ar.UpdatedAt, ar.ID).WillReturnResult(sqlmock.NewResult(12, 1))
+	row := DBconn.QueryRow(query, id)
+	err := row.Scan(
+		&res.ID,
+		&res.Title,
+		&res.Content,
+		&res.CreatedAt,
+		&res.UpdatedAt,
+	)
+	if err == nil {
+		return res
+	}
 
-	a := articleRepo.NewMysqlArticleRepository(db)
+	if err != sql.ErrNoRows {
+		require.NoError(t, err)
+	}
 
-	s, err := a.Update(context.TODO(), ar)
-	assert.NoError(t, err)
-	assert.NotNil(t, s)
+	return res
+}
+
+func getMockArrArticle() []menekel.Article {
+	return []menekel.Article{
+		menekel.Article{
+			ID:      1,
+			Title:   "Tekno",
+			Content: "tekno",
+		},
+		menekel.Article{
+			ID:      2,
+			Title:   "Bola",
+			Content: "bola",
+		},
+		menekel.Article{
+			ID:      3,
+			Title:   "Asmara",
+			Content: "asmara",
+		},
+		menekel.Article{
+			ID:      4,
+			Title:   "Celebs",
+			Content: "celebs",
+		},
+	}
+}
+
+func seedArticleData(t *testing.T, DBConn *sql.DB) {
+	arrArticles := getMockArrArticle()
+	query := `INSERT article SET id=?, title=?, content=?, created_at=?, updated_at=?`
+	stmt, err := DBConn.Prepare(query)
+	require.NoError(t, err)
+	defer Close(stmt)
+	for _, article := range arrArticles {
+		_, err := stmt.Exec(article.ID, article.Title, article.Content, time.Now(), time.Now())
+		require.NoError(t, err)
+	}
+}
+
+func (m *mysqlArticleSuiteTest) TestStore() {
+
+	// Prepare Steps
+	repo := repoHandler.NewArticleRepository(m.DBConn)
+
+	type testCase struct {
+		Title          string
+		Payload        *menekel.Article
+		ExpectedResult error
+	}
+	now := time.Now()
+	arrTestcase := []testCase{
+		testCase{
+			Title: "store-success",
+			Payload: &menekel.Article{
+				Title:     "News",
+				Content:   "news",
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+			ExpectedResult: nil,
+		},
+	}
+
+	for _, tc := range arrTestcase {
+		m.T().Run(tc.Title, func(t *testing.T) {
+			err := repo.Store(context.Background(), tc.Payload)
+			require.Equal(m.T(), tc.ExpectedResult, err)
+			if err == nil {
+				assert.NotZero(m.T(), tc.Payload.ID)
+				res := getArticleByID(m.T(), m.DBConn, tc.Payload.ID)
+				assert.NotNil(m.T(), res)
+				assert.Equal(m.T(), tc.Payload.Content, res.Content)
+			}
+		})
+	}
+}
+
+func (m *mysqlArticleSuiteTest) TestFetch() {
+	repo := repoHandler.NewArticleRepository(m.DBConn)
+	seedArticleData(m.T(), m.DBConn)
+
+	type testCase struct {
+		Title          string
+		Num            int64
+		Cursor         string
+		ExpectedResult []menekel.Article
+	}
+
+	arrTestcase := []testCase{
+		testCase{
+			Title: "fetch-without-cursor-success",
+			Num:   3,
+			ExpectedResult: []menekel.Article{
+				menekel.Article{
+					ID:      4,
+					Title:   "Celebs",
+					Content: "celebs",
+				},
+				menekel.Article{
+					ID:      3,
+					Title:   "Asmara",
+					Content: "asmara",
+				},
+				menekel.Article{
+					ID:      2,
+					Title:   "Bola",
+					Content: "bola",
+				},
+			},
+		},
+		testCase{
+			Title:  "fetch-with-cursor",
+			Num:    3,
+			Cursor: "3",
+			ExpectedResult: []menekel.Article{
+				menekel.Article{
+					ID:      2,
+					Title:   "Bola",
+					Content: "bola",
+				},
+				menekel.Article{
+					ID:      1,
+					Title:   "Tekno",
+					Content: "tekno",
+				},
+			},
+		},
+	}
+
+	for _, tc := range arrTestcase {
+		m.T().Run(tc.Title, func(t *testing.T) {
+			res, _, err := repo.Fetch(context.Background(), tc.Cursor, tc.Num)
+			require.NoError(t, err)
+			require.Equal(t, len(tc.ExpectedResult), len(res), tc.Title)
+			for i, item := range res {
+				assert.Equal(t, tc.ExpectedResult[i].ID, item.ID)
+				assert.Equal(t, tc.ExpectedResult[i].Title, item.Title)
+				assert.Equal(t, tc.ExpectedResult[i].Content, item.Content)
+			}
+		})
+	}
+}
+
+func (m *mysqlArticleSuiteTest) TestGetByID() {
+	// Prepare
+	mockArticle := getMockArrArticle()[0]
+	seedArticleData(m.T(), m.DBConn)
+	repo := repoHandler.NewArticleRepository(m.DBConn)
+
+	// Test the function
+	res, err := repo.GetByID(context.Background(), mockArticle.ID)
+
+	// Evaluate the results
+	require.NoError(m.T(), err)
+	assert.Equal(m.T(), mockArticle.ID, res.ID)
+	assert.Equal(m.T(), mockArticle.Title, res.Title)
+	assert.Equal(m.T(), mockArticle.Content, res.Content)
+}
+
+func (m *mysqlArticleSuiteTest) TestUpdate() {
+	// Prepare
+	mockArticle := getMockArrArticle()[0]
+	seedArticleData(m.T(), m.DBConn)
+	repo := repoHandler.NewArticleRepository(m.DBConn)
+	mockArticle.UpdatedAt = time.Now()
+	mockArticle.Title = "Teknologi" // previously only "tekno"
+
+	// Test the function
+	err := repo.Update(context.Background(), &mockArticle)
+
+	// Evaluate the results
+	require.NoError(m.T(), err)
+	res := getArticleByID(m.T(), m.DBConn, mockArticle.ID)
+	assert.NotNil(m.T(), res)
+	assert.Equal(m.T(), mockArticle.ID, res.ID)
+	assert.Equal(m.T(), mockArticle.Title, res.Title)
+	assert.Equal(m.T(), mockArticle.Content, res.Content)
+}
+
+func (m *mysqlArticleSuiteTest) TestDelete() {
+	// Prepare
+	mockArticle := getMockArrArticle()[0]
+	seedArticleData(m.T(), m.DBConn)
+	repo := repoHandler.NewArticleRepository(m.DBConn)
+
+	// Test the function
+	err := repo.Delete(context.Background(), mockArticle.ID)
+
+	// Evaluate the results
+	require.NoError(m.T(), err)
+	res := getArticleByID(m.T(), m.DBConn, mockArticle.ID)
+	assert.Empty(m.T(), res.ID)    // because already deleted the article should be empty
+	assert.Empty(m.T(), res.Title) // because already deleted the article should be empty
 }

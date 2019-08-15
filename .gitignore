@@ -12,3 +12,6 @@
 *.out
 menekel
 vendor
+bin/
+config.toml
+config.json

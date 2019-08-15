@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/golangid/menekel"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,29 +15,35 @@ type mysqlArticleRepository struct {
 	Conn *sql.DB
 }
 
-func NewMysqlArticleRepository(Conn *sql.DB) menekel.ArticleRepository {
-
+// NewArticleRepository will create an object that represent the article.Repository interface
+func NewArticleRepository(Conn *sql.DB) menekel.ArticleRepository {
+	if Conn == nil {
+		panic("Database Connections is nil")
+	}
 	return &mysqlArticleRepository{Conn}
 }
 
-func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args ...interface{}) ([]*menekel.Article, error) {
-
+func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args ...interface{}) (result []menekel.Article, err error) {
 	rows, err := m.Conn.QueryContext(ctx, query, args...)
-
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
 	}
-	defer rows.Close()
-	result := make([]*menekel.Article, 0)
+
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			logrus.Error(err)
+		}
+	}()
+
+	result = make([]menekel.Article, 0)
 	for rows.Next() {
-		t := new(menekel.Article)
-		authorID := int64(0)
+		t := menekel.Article{}
 		err = rows.Scan(
 			&t.ID,
 			&t.Title,
 			&t.Content,
-			&authorID,
 			&t.UpdatedAt,
 			&t.CreatedAt,
 		)
@@ -45,123 +52,144 @@ func (m *mysqlArticleRepository) fetch(ctx context.Context, query string, args .
 			logrus.Error(err)
 			return nil, err
 		}
-		t.Author = menekel.Author{
-			ID: authorID,
-		}
 		result = append(result, t)
 	}
 
 	return result, nil
 }
 
-func (m *mysqlArticleRepository) Fetch(ctx context.Context, cursor string, num int64) ([]*menekel.Article, error) {
+func (m *mysqlArticleRepository) Fetch(ctx context.Context, cursor string, num int64) (res []menekel.Article, nextCursor string, err error) {
+	qbuilder := squirrel.Select("id", "title", "content", "updated_at", "created_at").From("article")
+	qbuilder = qbuilder.OrderBy("id DESC").Limit(uint64(num))
 
-	query := `SELECT id,title,content, author_id, updated_at, created_at
-  						FROM article WHERE ID > ? LIMIT ?`
+	if cursor != "" {
+		decodedCursor, err := strconv.ParseInt(cursor, 10, 64)
+		if err != nil && cursor != "" {
+			return nil, "", menekel.ErrBadParamInput
+		}
+		qbuilder = qbuilder.Where(squirrel.Lt{
+			"id": decodedCursor,
+		})
+	}
 
-	return m.fetch(ctx, query, cursor, num)
+	query, args, err := qbuilder.ToSql()
+	if err != nil {
+		return
+	}
 
+	res, err = m.fetch(ctx, query, args...)
+	if err != nil {
+		return nil, "", err
+	}
+
+	nextCursor = cursor
+	if len(res) > 0 {
+		nextCursor = fmt.Sprintf("%d", res[len(res)-1].ID)
+	}
+	return
 }
-func (m *mysqlArticleRepository) GetByID(ctx context.Context, id int64) (*menekel.Article, error) {
-	query := `SELECT id,title,content, author_id, updated_at, created_at
+
+func (m *mysqlArticleRepository) GetByID(ctx context.Context, id int64) (res menekel.Article, err error) {
+	query := `SELECT id,title,content, updated_at, created_at
   						FROM article WHERE ID = ?`
 
 	list, err := m.fetch(ctx, query, id)
 	if err != nil {
-		return nil, err
+		return menekel.Article{}, err
 	}
 
-	a := &menekel.Article{}
 	if len(list) > 0 {
-		a = list[0]
+		res = list[0]
 	} else {
-		return nil, menekel.NOT_FOUND_ERROR
+		return res, menekel.ErrNotFound
 	}
 
-	return a, nil
+	return
 }
 
-func (m *mysqlArticleRepository) GetByTitle(ctx context.Context, title string) (*menekel.Article, error) {
-	query := `SELECT id,title,content, author_id, updated_at, created_at
+func (m *mysqlArticleRepository) GetByTitle(ctx context.Context, title string) (res menekel.Article, err error) {
+	query := `SELECT id,title,content, updated_at, created_at
   						FROM article WHERE title = ?`
 
 	list, err := m.fetch(ctx, query, title)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	a := &menekel.Article{}
 	if len(list) > 0 {
-		a = list[0]
+		res = list[0]
 	} else {
-		return nil, menekel.NOT_FOUND_ERROR
+		return res, menekel.ErrNotFound
 	}
-	return a, nil
+	return
 }
 
-func (m *mysqlArticleRepository) Store(ctx context.Context, a *menekel.Article) (int64, error) {
-
-	query := `INSERT  article SET title=? , content=? , author_id=?, updated_at=? , created_at=?`
+func (m *mysqlArticleRepository) Store(ctx context.Context, a *menekel.Article) (err error) {
+	query := `INSERT  article SET title=? , content=? , updated_at=? , created_at=?`
 	stmt, err := m.Conn.PrepareContext(ctx, query)
 	if err != nil {
-
-		return 0, err
+		return
 	}
 
-	logrus.Debug("Created At: ", a.CreatedAt)
-	res, err := stmt.ExecContext(ctx, a.Title, a.Content, a.Author.ID, a.UpdatedAt, a.CreatedAt)
+	res, err := stmt.ExecContext(ctx, a.Title, a.Content, a.UpdatedAt, a.CreatedAt)
 	if err != nil {
-
-		return 0, err
+		return
 	}
-	return res.LastInsertId()
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return
+	}
+	a.ID = lastID
+	return
 }
 
-func (m *mysqlArticleRepository) Delete(ctx context.Context, id int64) (bool, error) {
+func (m *mysqlArticleRepository) Delete(ctx context.Context, id int64) (err error) {
 	query := "DELETE FROM article WHERE id = ?"
 
 	stmt, err := m.Conn.PrepareContext(ctx, query)
 	if err != nil {
-		return false, err
+		return
 	}
+
 	res, err := stmt.ExecContext(ctx, id)
 	if err != nil {
-
-		return false, err
+		return
 	}
+
 	rowsAfected, err := res.RowsAffected()
 	if err != nil {
-		return false, err
-	}
-	if rowsAfected != 1 {
-		err = fmt.Errorf("Weird  Behaviour. Total Affected: %d", rowsAfected)
-		logrus.Error(err)
-		return false, err
+		return
 	}
 
-	return true, nil
+	if rowsAfected != 1 {
+		err = fmt.Errorf("Weird  Behaviour. Total Affected: %d", rowsAfected)
+		return
+	}
+
+	return
 }
-func (m *mysqlArticleRepository) Update(ctx context.Context, ar *menekel.Article) (*menekel.Article, error) {
-	query := `UPDATE article set title=?, content=?, author_id=?, updated_at=? WHERE ID = ?`
+func (m *mysqlArticleRepository) Update(ctx context.Context, ar *menekel.Article) (err error) {
+	query := `UPDATE article set title=?, content=?, updated_at=? WHERE ID = ?`
 
 	stmt, err := m.Conn.PrepareContext(ctx, query)
 	if err != nil {
-		return nil, nil
+		return
 	}
 
-	res, err := stmt.ExecContext(ctx, ar.Title, ar.Content, ar.Author.ID, ar.UpdatedAt, ar.ID)
+	res, err := stmt.ExecContext(ctx, ar.Title, ar.Content, ar.UpdatedAt, ar.ID)
 	if err != nil {
-		return nil, err
+		return
 	}
+
 	affect, err := res.RowsAffected()
 	if err != nil {
-		return nil, err
-	}
-	if affect != 1 {
-		err = fmt.Errorf("Weird  Behaviour. Total Affected: %d", affect)
-		logrus.Error(err)
-		return nil, err
+		return
 	}
 
-	return ar, nil
+	if affect != 1 {
+		err = fmt.Errorf("Weird  Behaviour. Total Affected: %d", affect)
+		return
+	}
+
+	return
 }

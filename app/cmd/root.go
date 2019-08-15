@@ -6,9 +6,10 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"strings"
 
+	// imported for Mysql driver
 	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/golangid/menekel"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -16,19 +17,18 @@ import (
 )
 
 var (
-	RootCMD = &cobra.Command{
+	rootCmd = &cobra.Command{
 		Use:   "menekel",
 		Short: "Article Management CLI",
 	}
 	articleUsecase    menekel.ArticleUsecase
 	articleRepository menekel.ArticleRepository
-	autorRepository   menekel.AuthorRepository
-	configFile        string
 	dbConn            *sql.DB
 )
 
+// Execute will run the CLI app of menekel
 func Execute() {
-	if err := RootCMD.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		logrus.Error(err)
 		os.Exit(1)
 	}
@@ -36,29 +36,26 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig, initHTTPServiceDependecies)
-	RootCMD.PersistentFlags().StringVar(&configFile, `config`, `./config.json`, `JSON file consists all configurations`)
 }
+
 func initConfig() {
-	viper.SetConfigType("json")
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
+	viper.SetConfigType("toml")
+	viper.SetConfigFile("config.toml")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(err)
 	}
-	viper.AddConfigPath(".")
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	replacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(replacer)
-	if err := viper.ReadInConfig(); err != nil {
-		logrus.Errorf("Cannot use config: %v. Got error:%v ", viper.ConfigFileUsed(), err)
-		os.Exit(1)
-	}
+
 	logrus.Info("Using Config file: ", viper.ConfigFileUsed())
+
 	if viper.GetBool("debug") {
 		logrus.SetLevel(logrus.DebugLevel)
-		logrus.Warn("Menekel is Running in Debug Mode")
+		logrus.Warn("Comment service is Running in Debug Mode")
 		return
 	}
 	logrus.SetLevel(logrus.InfoLevel)
-	logrus.Warn("Menekel is Running in Production Mode")
+	logrus.Warn("Comment service is Running in Production Mode")
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 }
 
 func initHTTPServiceDependecies() {
@@ -73,7 +70,8 @@ func initHTTPServiceDependecies() {
 	val.Add("parseTime", "1")
 	val.Add("loc", "Asia/Jakarta")
 	dsn := fmt.Sprintf("%s?%s", connection, val.Encode())
-	dbConn, err := sql.Open(`mysql`, dsn)
+	var err error
+	dbConn, err = sql.Open(`mysql`, dsn)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -83,6 +81,4 @@ func initHTTPServiceDependecies() {
 		log.Fatal(err)
 		os.Exit(1)
 	}
-	defer dbConn.Close()
-
 }

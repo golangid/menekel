@@ -3,7 +3,12 @@ package menekel
 import "errors"
 
 var (
-	INTERNAL_SERVER_ERROR = errors.New("Internal Server Error")
-	NOT_FOUND_ERROR       = errors.New("Your requested Item is not found")
-	CONFLIT_ERROR         = errors.New("Your Item already exist")
+	// ErrInternalServerError will throw if any the Internal Server Error happen
+	ErrInternalServerError = errors.New("Internal Server Error")
+	// ErrNotFound will throw if the requested item is not exists
+	ErrNotFound = errors.New("Your requested Item is not found")
+	// ErrConflict will throw if the current action already exists
+	ErrConflict = errors.New("Your Item already exist")
+	// ErrBadParamInput will throw if the given request-body or params is not valid
+	ErrBadParamInput = errors.New("Given Param is not valid")
 )

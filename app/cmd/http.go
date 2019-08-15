@@ -8,13 +8,13 @@ import (
 	"github.com/golangid/menekel/article"
 	"github.com/golangid/menekel/internal/database/mysql"
 	delivery "github.com/golangid/menekel/internal/http"
-	"github.com/golangid/menekel/middleware"
+	"github.com/golangid/menekel/internal/http/middleware"
 	"github.com/labstack/echo"
 	"github.com/spf13/viper"
 )
 
 var (
-	HTTPCMD = &cobra.Command{
+	httpCmd = &cobra.Command{
 		Use:   "http",
 		Short: "Start HTTP REST API",
 		Run:   initHTTP,
@@ -25,16 +25,15 @@ func initHTTP(cmd *cobra.Command, args []string) {
 	e := echo.New()
 	middL := middleware.InitMiddleware()
 	e.Use(middL.CORS)
-	authorRepo := mysql.NewMysqlAuthorRepository(dbConn)
-	ar := mysql.NewMysqlArticleRepository(dbConn)
+	articleRepository = mysql.NewArticleRepository(dbConn)
 
 	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
-	au := article.NewArticleUsecase(ar, authorRepo, timeoutContext)
-	delivery.NewArticleHttpHandler(e, au)
+	au := article.NewArticleUsecase(articleRepository, timeoutContext)
+	delivery.InitArticleHandler(e, au)
 
 	e.Start(viper.GetString("server.address"))
 }
 
 func init() {
-	RootCMD.AddCommand(HTTPCMD)
+	rootCmd.AddCommand(httpCmd)
 }
