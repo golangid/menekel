@@ -1,8 +1,9 @@
 # Builder
-FROM golang:1.12.8-alpine3.10 as builder
+FROM golang:1.14.0-stretch as builder
 
-RUN apk update && apk upgrade && \
-    apk --update add git gcc make
+RUN apt --yes --force-yes update && apt --yes --force-yes upgrade && \
+    apt --yes --force-yes install git \
+    make openssh-client
 
 WORKDIR /app
 

@@ -53,7 +53,7 @@ unittest:
 	@go test -v -short -race ./...
 
 menekel:
-	@go build -o menekel app/main.go
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o menekel app/main.go
 
 .PHONY: docker
 docker:
