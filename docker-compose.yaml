@@ -10,7 +10,7 @@ services:
         condition: service_healthy
 
     volumes:
-      - ./config.toml:/app/config.toml
+      - ./config.toml:/menekel/config.toml
   mysql:
     image: mysql:5.7 
     container_name: menekel_mysql

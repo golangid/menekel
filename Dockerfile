@@ -16,9 +16,9 @@ FROM alpine:latest
 
 RUN apk update && apk upgrade && \
     apk --update --no-cache add tzdata && \
-    mkdir /app 
+    mkdir /app /menekel
 
-WORKDIR /app 
+WORKDIR /menekel
 
 EXPOSE 9090
 
