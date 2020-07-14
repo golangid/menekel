@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -30,6 +31,10 @@ func initHTTP(cmd *cobra.Command, args []string) {
 	timeoutContext := time.Duration(viper.GetInt("contextTimeout")) * time.Second
 	au := article.NewArticleUsecase(articleRepository, timeoutContext)
 	delivery.InitArticleHandler(e, au)
+
+	e.GET("/healthcheck", func(c echo.Context) error {
+		return c.String(http.StatusOK, "I'm healthy bro!")
+	})
 
 	e.Start(viper.GetString("server.address"))
 }
