@@ -10,7 +10,7 @@ import (
 	"github.com/golangid/menekel/internal/database/mysql"
 	delivery "github.com/golangid/menekel/internal/http"
 	"github.com/golangid/menekel/internal/http/middleware"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
 
@@ -24,8 +24,7 @@ var (
 
 func initHTTP(cmd *cobra.Command, args []string) {
 	e := echo.New()
-	middL := middleware.InitMiddleware()
-	e.Use(middL.CORS)
+	e.Use(middleware.CORS)
 	articleRepository = mysql.NewArticleRepository(dbConn)
 
 	timeoutContext := time.Duration(viper.GetInt("contextTimeout")) * time.Second

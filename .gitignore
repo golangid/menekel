@@ -15,3 +15,4 @@ vendor
 bin/
 config.toml
 config.json
+tmp

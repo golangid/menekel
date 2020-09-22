@@ -12,11 +12,11 @@ import (
 	"github.com/golangid/menekel"
 	articleHttp "github.com/golangid/menekel/internal/http"
 	"github.com/golangid/menekel/mocks"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/bxcodec/faker"
+	"github.com/bxcodec/faker/v3"
 )
 
 func TestFetch(t *testing.T) {

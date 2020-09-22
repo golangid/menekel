@@ -9,7 +9,7 @@ import (
 
 	"github.com/golangid/menekel"
 	articleUcase "github.com/golangid/menekel"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 
 	validator "gopkg.in/go-playground/validator.v9"
 )
