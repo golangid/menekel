@@ -50,7 +50,7 @@ full-test:
 
 .PHONY: full-test-local
 full-test-local:
-	@docker-compose -f test.docker-compose.yaml up -d postgres-test
+	@docker-compose -f test.docker-compose.yaml up -d mysql_test
 	@make full-test
 	# @docker-compose -f test.docker-compose.yaml down --volumes
 
