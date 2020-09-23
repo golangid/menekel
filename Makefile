@@ -56,7 +56,8 @@ full-test-local:
 
 .PHONY: docker-test
 docker-test:
-	@docker-compose -f test.docker-compose.yaml up --build --abort-on-container-exit
+	@docker-compose -f test.docker-compose.yaml up -d mysql_test
+	@docker-compose -f test.docker-compose.yaml up --build --abort-on-container-exit 
 	@docker-compose -f test.docker-compose.yaml down --volumes
 
 .PHONY: unittest
@@ -72,7 +73,7 @@ docker:
 
 .PHONY: run
 run:
-	@docker-compose up -d
+	@docker-compose up -d --build
 	
 .PHONY: stop
 stop:
