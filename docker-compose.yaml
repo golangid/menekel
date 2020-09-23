@@ -1,16 +1,16 @@
-version: "2.3"
+version: "3.8"
 services:
   web:
-    image: menekel
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
     container_name: menekel_api
     ports:
-      - 9090:9090
+      - 9191:9090
     depends_on:
-      mysql:
-        condition: service_healthy
-
+      - mysql
     volumes:
-      - ./config.toml:/menekel/config.toml
+      - ./:/app
   mysql:
     image: mysql:5.7 
     container_name: menekel_mysql
@@ -19,22 +19,6 @@ services:
       - 3306:3306
     environment:
       - MYSQL_DATABASE=article
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
-      - MYSQL_ROOT_PASSWORD=root
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 5s
-      retries: 10
-  
-  mysql_test:
-    image: mysql:5.7 
-    container_name: menekel_mysql_test
-    command: mysqld --user=root
-    ports:
-      - 33060:3306
-    environment:
-      - MYSQL_DATABASE=testing
       - MYSQL_USER=user
       - MYSQL_PASSWORD=password
       - MYSQL_ROOT_PASSWORD=root

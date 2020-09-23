@@ -2,7 +2,6 @@ package mysql_test
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -30,13 +29,11 @@ func (s *MysqlSuite) SetupSuite() {
 	var err error
 
 	s.DBConn, err = sql.Open(mysql, s.DSN)
-	for {
-		err := s.DBConn.Ping()
-		if err == nil {
-			break
-		}
-		fmt.Println(err)
-	}
+	s.Require().NoError(err)
+
+	err = s.DBConn.Ping()
+	s.Require().NoError(err)
+
 	_, err = s.DBConn.Exec("set global sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';")
 	require.NoError(s.T(), err)
 	_, err = s.DBConn.Exec("set session sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';")

@@ -9,7 +9,7 @@ import (
 
 	"github.com/golangid/menekel"
 	articleUcase "github.com/golangid/menekel"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 
 	validator "gopkg.in/go-playground/validator.v9"
 )
@@ -28,11 +28,11 @@ func InitArticleHandler(e *echo.Echo, us articleUcase.ArticleUsecase) {
 	handler := &articleHandler{
 		AUsecase: us,
 	}
+
 	e.GET("/articles", handler.FetchArticle)
 	e.POST("/articles", handler.Store)
 	e.GET("/articles/:id", handler.GetByID)
 	e.DELETE("/articles/:id", handler.Delete)
-
 }
 
 func (a *articleHandler) FetchArticle(c echo.Context) error {

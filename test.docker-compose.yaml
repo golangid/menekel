@@ -1,0 +1,35 @@
+version: "2.3"
+networks:
+  integration-tests:
+    driver: bridge
+services:
+  mysql_test:
+    image: mysql:5.7 
+    container_name: menekel_mysql_test
+    command: mysqld --user=root
+    ports:
+      - 33060:3306
+    networks:
+      - integration-tests
+    environment:
+      - MYSQL_DATABASE=testing
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+  api_test:
+    build:
+      context: .
+      dockerfile: ./test.Dockerfile
+    environment: 
+      - MYSQL_TEST_URL=root:root@tcp(mysql_test:3306)/testing?parseTime=1&loc=Asia%2FJakarta&charset=utf8mb4&collation=utf8mb4_unicode_ci
+    networks:
+      - integration-tests
+    # NOTES: This features only available in V2.
+    # https://github.com/peter-evans/docker-compose-healthcheck/issues/3#issuecomment-329037485
+    depends_on:
+      mysql_test:
+        condition: service_healthy

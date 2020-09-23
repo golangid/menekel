@@ -24,10 +24,15 @@ func TestArticleSuite(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skip article mysql repository test")
 	}
-	dsn := os.Getenv("MYSQL_TEST_URL")
-	if dsn == "" {
+	dsn, ok := os.LookupEnv("MYSQL_TEST_URL")
+	t.Logf("Using  DSN %s", dsn)
+
+	if !ok {
 		dsn = "root:root@tcp(127.0.0.1:33060)/testing?parseTime=1&loc=Asia%2FJakarta&charset=utf8mb4&collation=utf8mb4_unicode_ci"
 	}
+
+	t.Logf("Using  DSN %s", dsn)
+
 	articleSuite := &mysqlArticleSuiteTest{
 		MysqlSuite{
 			DSN:                     dsn,

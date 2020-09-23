@@ -43,10 +43,22 @@ mysql-test-up:
 mysql-down-test:
 	@docker-compose stop mysql_test
 
-.PHONY: test
-test: mysql-test-up
-	@go test -v -race ./...
-	@make mysql-down-test
+.PHONY: full-test
+full-test:
+	@echo "Running the full test..."
+	@go test -v -cover -race ./...
+
+.PHONY: full-test-local
+full-test-local:
+	@docker-compose -f test.docker-compose.yaml up -d mysql_test
+	@make full-test
+	# @docker-compose -f test.docker-compose.yaml down --volumes
+
+.PHONY: docker-test
+docker-test:
+	@docker-compose -f test.docker-compose.yaml up -d mysql_test
+	@docker-compose -f test.docker-compose.yaml up --build --abort-on-container-exit 
+	@docker-compose -f test.docker-compose.yaml down --volumes
 
 .PHONY: unittest
 unittest:
@@ -61,17 +73,19 @@ docker:
 
 .PHONY: run
 run:
-	@docker-compose up -d
-	@make mysql-down-test
-
+	@docker-compose up -d --build
+	
 .PHONY: stop
 stop:
 	@docker-compose down
 
 .PHONY: migrate-prepare
 migrate-prepare:
-	@go get -u github.com/golang-migrate/migrate/v4
-	@go build -a -o ./bin/migrate -tags 'mysql' github.com/golang-migrate/migrate/v4/cli
+	@go get -tags 'mysql' -u github.com/golang-migrate/migrate/v4/cmd/migrate
+	@go build -a -o ./bin/migrate -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate
+
+	# @go get -u github.com/golang-migrate/migrate/v4
+	# @go build -a -o ./bin/migrate -tags 'mysql' github.com/golang-migrate/migrate/v4/cli
 
 .PHONY: migrate-up
 migrate-up:
